@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Building2, Plus, CheckCircle2, XCircle, AlertCircle, PackageCheck, Layers, Settings, Trash2, ShieldAlert } from 'lucide-react';
 import { ITEM_CATEGORIES } from '../constants/itemTypes';
+import { API_BASE_URL } from '../config/api';
 
 export default function NgoDashboard({ onDataUpdated }) {
   const [ngos, setNgos] = useState([]);
@@ -27,7 +28,7 @@ export default function NgoDashboard({ onDataUpdated }) {
 
   const fetchNgoData = async () => {
     try {
-      const res = await fetch('/api/ngos');
+      const res = await fetch(`${API_BASE_URL}/api/ngos`);
       const data = await res.json();
       setNgos(data);
 
@@ -38,7 +39,7 @@ export default function NgoDashboard({ onDataUpdated }) {
       }
 
       if (curr) {
-        const matchRes = await fetch(`/api/ngo-matches/${curr.id}`);
+        const matchRes = await fetch(`${API_BASE_URL}/api/ngo-matches/${curr.id}`);
         const matchesData = await matchRes.json();
         setIncomingMatches(matchesData);
       }
@@ -56,7 +57,7 @@ export default function NgoDashboard({ onDataUpdated }) {
   const handleUpdateCapacity = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch(`/api/ngos/${selectedNgoId}/capacity`, {
+      const res = await fetch(`${API_BASE_URL}/api/ngos/${selectedNgoId}/capacity`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ max_capacity: Number(capacityInput) })
@@ -74,7 +75,7 @@ export default function NgoDashboard({ onDataUpdated }) {
   const handleAddNeed = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch(`/api/ngos/${selectedNgoId}/needs`, {
+      const res = await fetch(`${API_BASE_URL}/api/ngos/${selectedNgoId}/needs`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newNeed)
@@ -91,7 +92,7 @@ export default function NgoDashboard({ onDataUpdated }) {
 
   const handleDeleteNeed = async (needId) => {
     try {
-      await fetch(`/api/ngos/needs/${needId}`, { method: 'DELETE' });
+      await fetch(`${API_BASE_URL}/api/ngos/needs/${needId}`, { method: 'DELETE' });
       fetchNgoData();
       if (onDataUpdated) onDataUpdated();
     } catch (err) {
@@ -101,7 +102,7 @@ export default function NgoDashboard({ onDataUpdated }) {
 
   const handleAcceptMatch = async (matchId) => {
     try {
-      const res = await fetch(`/api/matches/${matchId}/accept`, { method: 'POST' });
+      const res = await fetch(`${API_BASE_URL}/api/matches/${matchId}/accept`, { method: 'POST' });
       if (res.ok) {
         fetchNgoData();
         if (onDataUpdated) onDataUpdated();
@@ -113,7 +114,7 @@ export default function NgoDashboard({ onDataUpdated }) {
 
   const handleDeclineMatch = async (matchId) => {
     try {
-      const res = await fetch(`/api/matches/${matchId}/decline`, { method: 'POST' });
+      const res = await fetch(`${API_BASE_URL}/api/matches/${matchId}/decline`, { method: 'POST' });
       if (res.ok) {
         fetchNgoData();
         if (onDataUpdated) onDataUpdated();

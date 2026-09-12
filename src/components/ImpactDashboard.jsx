@@ -3,6 +3,7 @@ import { Heart, ShieldCheck, Flame, MapPin, Users, Scale, Building, Sparkles } f
 import { MapContainer, TileLayer, Marker, Popup, CircleMarker } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
+import { API_BASE_URL } from '../config/api';
 
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -16,7 +17,7 @@ export default function ImpactDashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/api/impact')
+    fetch(`${API_BASE_URL}/api/impact`)
       .then(res => res.json())
       .then(data => {
         setImpactData(data);

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Recycle, Scissors, Factory, ShieldCheck, MapPin, Phone, ArrowRight, ExternalLink } from 'lucide-react';
+import { API_BASE_URL } from '../config/api';
 
 export default function RecyclingHub() {
   const [partners, setPartners] = useState([]);
@@ -8,8 +9,8 @@ export default function RecyclingHub() {
 
   useEffect(() => {
     Promise.all([
-      fetch('/api/recycling-partners').then(r => r.json()),
-      fetch('/api/items').then(r => r.json())
+      fetch(`${API_BASE_URL}/api/recycling-partners`).then(r => r.json()),
+      fetch(`${API_BASE_URL}/api/items`).then(r => r.json())
     ])
       .then(([partnersData, itemsData]) => {
         setPartners(partnersData);

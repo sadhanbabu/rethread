@@ -6,7 +6,24 @@ import { findTopMatches } from './matchingEngine.js';
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-app.use(cors());
+const allowedOrigins = [
+  'https://rethread-sigma.vercel.app',
+  'http://localhost:5173',
+  'http://localhost:5000',
+  'http://127.0.0.1:5173'
+];
+
+app.use(cors({
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps, curl, or server-to-server)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
+      return callback(null, true);
+    }
+    return callback(null, true); // Fallback allow for demo flexibility
+  },
+  credentials: true
+}));
 app.use(express.json());
 
 // ----------------------------------------------------

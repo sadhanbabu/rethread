@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Upload, Sparkles, MapPin, CheckCircle2, AlertTriangle, ArrowRight, ShieldCheck, Heart, Recycle, ArrowDown, Image as ImageIcon, X } from 'lucide-react';
 import { ITEM_CATEGORIES } from '../constants/itemTypes';
+import { API_BASE_URL } from '../config/api';
 import Hero3DElement from './Hero3DElement';
 import SystemFlowDiagram from './SystemFlowDiagram';
 import TiltCard from './TiltCard';
@@ -96,7 +97,7 @@ export default function DonorPortal({ onNavigateRecycling, onItemDonated }) {
     setAcceptedNgoId(null);
 
     try {
-      const response = await fetch('/api/items', {
+      const response = await fetch(`${API_BASE_URL}/api/items`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
@@ -115,12 +116,12 @@ export default function DonorPortal({ onNavigateRecycling, onItemDonated }) {
 
   const handleConfirmDonation = async (match) => {
     try {
-      const res = await fetch(`/api/ngo-matches/${match.ngo.id}`);
+      const res = await fetch(`${API_BASE_URL}/api/ngo-matches/${match.ngo.id}`);
       const matches = await res.json();
       const itemMatch = matches.find(m => m.item_id === submittedItem.id);
 
       if (itemMatch) {
-        await fetch(`/api/matches/${itemMatch.id}/accept`, { method: 'POST' });
+        await fetch(`${API_BASE_URL}/api/matches/${itemMatch.id}/accept`, { method: 'POST' });
       }
 
       setAcceptedNgoId(match.ngo.id);

@@ -5,13 +5,14 @@ import DonorPortal from './components/DonorPortal';
 import NgoDashboard from './components/NgoDashboard';
 import ImpactDashboard from './components/ImpactDashboard';
 import RecyclingHub from './components/RecyclingHub';
+import { API_BASE_URL } from './config/api';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('donor');
   const [stats, setStats] = useState(null);
 
   const fetchGlobalStats = () => {
-    fetch('/api/impact')
+    fetch(`${API_BASE_URL}/api/impact`)
       .then(res => res.json())
       .then(data => {
         if (data && data.stats) {
