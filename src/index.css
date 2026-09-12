@@ -1,0 +1,123 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --font-serif: 'Fraunces', Georgia, serif;
+    --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+    --bg-warm: #F9F6F0;
+    --color-sage: #4A7C59;
+    --color-sage-dark: #2F533A;
+    --color-sage-darkest: #2E533A;
+    --color-sage-light: #EBF2ED;
+    --text-primary: #1D2921;
+    --text-secondary: #637367;
+  }
+
+  body {
+    background-color: #F9F6F0;
+    color: #1D2921;
+    font-family: var(--font-sans);
+    line-height: 1.6;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1, h2, h3, .font-serif {
+    font-family: var(--font-serif);
+    letter-spacing: -0.02em;
+  }
+}
+
+/* Custom Soft Elevated Card Shadows (Airbnb / Patagonia Style) */
+.card-elevated {
+  background-color: #FFFFFF;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.03);
+  border: 1px solid rgba(226, 220, 210, 0.6);
+  transition: all 250ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.card-elevated:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08), 0 2px 6px rgba(0, 0, 0, 0.04);
+  border-color: rgba(74, 124, 89, 0.3);
+}
+
+.card-static {
+  background-color: #FFFFFF;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(226, 220, 210, 0.6);
+}
+
+/* Premium Buttons (Linear style smooth 150ms ease) */
+.btn-primary {
+  background-color: #4A7C59;
+  color: #FFFFFF;
+  border-radius: 10px;
+  padding: 12px 24px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  transition: all 150ms ease-in-out;
+  box-shadow: 0 2px 8px rgba(74, 124, 89, 0.25);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn-primary:hover {
+  background-color: #2F533A;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(47, 83, 58, 0.3);
+}
+
+.btn-secondary {
+  background-color: #F0ECE1;
+  color: #1D2921;
+  border-radius: 10px;
+  padding: 12px 24px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  border: 1px solid #E2DCD2;
+  transition: all 150ms ease-in-out;
+}
+
+.btn-secondary:hover {
+  background-color: #E5DFC5;
+  border-color: #D6CEA5;
+}
+
+/* Linear-style Badges with Subtle Gradients */
+.badge-gradient-sage {
+  background: linear-gradient(135deg, #EBF2ED 0%, #D8E6DC 100%);
+  color: #2F533A;
+  border: 1px solid rgba(74, 124, 89, 0.2);
+}
+
+.badge-gradient-rose {
+  background: linear-gradient(135deg, #FFF1F2 0%, #FFE4E6 100%);
+  color: #9F1239;
+  border: 1px solid rgba(225, 29, 72, 0.2);
+}
+
+.badge-gradient-amber {
+  background: linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%);
+  color: #92400E;
+  border: 1px solid rgba(217, 119, 6, 0.2);
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 350ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Leaflet Map Tweak */
+.leaflet-container {
+  border-radius: 16px;
+}
