@@ -747,7 +747,7 @@ app.get('/api/impact', (req, res) => {
     });
 
     const kgDiverted = userId
-      ? Math.round((totalItems * 2.4) * 10) / 10
+      ? Math.round((matchedCount * 1.8 + recycledCount * 2.4) * 10) / 10
       : Math.round((matchedCount * 1.5 + recycledCount * 2.2) * 10) / 10;
 
     res.json({
