@@ -357,7 +357,7 @@ app.get('/api/items', (req, res) => {
 
     let items;
     if (userId) {
-      items = db.prepare('SELECT * FROM items WHERE user_id = ? OR user_id IS NULL ORDER BY created_at DESC').all(userId);
+      items = db.prepare('SELECT * FROM items WHERE user_id = ? ORDER BY created_at DESC').all(userId);
     } else {
       items = db.prepare('SELECT * FROM items ORDER BY created_at DESC').all();
     }
@@ -698,24 +698,20 @@ app.get('/api/impact', (req, res) => {
       userId = parseToken(token);
     }
 
-    let acceptedCount = 0;
+    let matchedCount = 0;
     let totalItems = 0;
     let recycledCount = 0;
 
     if (userId) {
       // User-specific stats
       totalItems = db.prepare('SELECT COUNT(*) as count FROM items WHERE user_id = ?').get(userId).count;
-      recycledCount = db.prepare("SELECT COUNT(*) as count FROM items WHERE user_id = ? AND status = 'routed_recycling'").get(userId).count;
-      acceptedCount = db.prepare(`
-        SELECT COUNT(*) as count 
-        FROM items 
-        WHERE user_id = ? AND status = 'accepted'
-      `).get(userId).count;
+      recycledCount = db.prepare("SELECT COUNT(*) as count FROM items WHERE user_id = ? AND (status = 'routed_recycling' OR condition = 'Needs Repair')").get(userId).count;
+      matchedCount = db.prepare("SELECT COUNT(*) as count FROM items WHERE user_id = ? AND (status = 'matched' OR status = 'accepted')").get(userId).count;
     } else {
       // Platform-wide stats
-      acceptedCount = db.prepare("SELECT COUNT(*) as count FROM matches WHERE status = 'accepted'").get().count;
+      matchedCount = db.prepare("SELECT COUNT(*) as count FROM matches WHERE status = 'accepted' OR status = 'pending'").get().count;
       totalItems = db.prepare('SELECT COUNT(*) as count FROM items').get().count;
-      recycledCount = db.prepare("SELECT COUNT(*) as count FROM items WHERE condition = 'Needs Repair'").get().count;
+      recycledCount = db.prepare("SELECT COUNT(*) as count FROM items WHERE condition = 'Needs Repair' OR status = 'routed_recycling'").get().count;
     }
 
     const ngos = db.prepare('SELECT * FROM ngos').all();
@@ -750,13 +746,17 @@ app.get('/api/impact', (req, res) => {
       };
     });
 
+    const kgDiverted = userId
+      ? Math.round((totalItems * 2.4) * 10) / 10
+      : Math.round((matchedCount * 1.5 + recycledCount * 2.2) * 10) / 10;
+
     res.json({
       stats: {
         totalDonated: totalItems,
-        familiesHelped: acceptedCount,
-        itemsRedistributed: acceptedCount,
+        familiesHelped: matchedCount,
+        itemsRedistributed: matchedCount,
         itemsRecycled: recycledCount,
-        kgWasteDiverted: Math.round((acceptedCount * 1.5 + recycledCount * 2.2) * 10) / 10,
+        kgWasteDiverted: kgDiverted,
         activeNgosCount: ngos.length
       },
       isPersonalized: !!userId,

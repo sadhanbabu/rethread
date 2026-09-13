@@ -1,6 +1,7 @@
 import Database from 'better-sqlite3';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import bcrypt from 'bcrypt';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -112,10 +113,35 @@ function initDb() {
     // Column already exists
   }
 
+  seedDemoUsers();
+
   // Seed Data if empty
   const ngoCount = db.prepare('SELECT COUNT(*) as count FROM ngos').get().count;
   if (ngoCount === 0) {
     seedDatabase();
+  }
+}
+
+function seedDemoUsers() {
+  try {
+    const hash = bcrypt.hashSync('demo123', 10);
+    const demoUsers = [
+      { email: 'donor@rethread.org', type: 'donor' },
+      { email: 'hopehaven@rethread.org', type: 'receiver' },
+      { email: 'missioncommunity@rethread.org', type: 'receiver' },
+      { email: 'sarah.family@rethread.org', type: 'receiver' }
+    ];
+
+    for (const u of demoUsers) {
+      const existing = db.prepare('SELECT id FROM users WHERE email = ?').get(u.email);
+      if (!existing) {
+        db.prepare('INSERT INTO users (email, password_hash, account_type) VALUES (?, ?, ?)').run(u.email, hash, u.type);
+      } else {
+        db.prepare('UPDATE users SET password_hash = ? WHERE id = ?').run(hash, existing.id);
+      }
+    }
+  } catch (err) {
+    console.error('Error seeding demo users:', err);
   }
 }
 
