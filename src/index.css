@@ -4,13 +4,13 @@
   :root {
     --font-serif: 'Fraunces', Georgia, serif;
     --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
-    --bg-warm: #F9F6F0;
-    --color-sage: #4A7C59;
-    --color-sage-dark: #2F533A;
-    --color-sage-darkest: #2E533A;
-    --color-sage-light: #EBF2ED;
-    --text-primary: #1D2921;
-    --text-secondary: #637367;
+    --bg-dark: #1A1A1A;
+    --bg-ivory: #F5F1E8;
+    --color-terracotta: #C1502E;
+    --color-gold: #D4A94A;
+    --color-sage-muted: #7A9471;
+    --text-on-dark: #F5F1E8;
+    --text-on-light: #1A1A1A;
   }
 
   body {
@@ -24,100 +24,137 @@
 
   h1, h2, h3, .font-serif {
     font-family: var(--font-serif);
-    letter-spacing: -0.02em;
+    letter-spacing: -0.03em;
   }
 }
 
-/* Custom Soft Elevated Card Shadows (Airbnb / Patagonia Style) */
-.card-elevated {
-  background-color: #FFFFFF;
-  border-radius: 16px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.03);
-  border: 1px solid rgba(226, 220, 210, 0.6);
-  transition: all 250ms cubic-bezier(0.16, 1, 0.3, 1);
+/* Editorial Tracked Micro-Labels */
+.editorial-label {
+  font-family: var(--font-sans);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.25em;
+  color: var(--color-gold);
 }
 
-.card-elevated:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08), 0 2px 6px rgba(0, 0, 0, 0.04);
-  border-color: rgba(74, 124, 89, 0.3);
-}
-
-.card-static {
-  background-color: #FFFFFF;
-  border-radius: 16px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-  border: 1px solid rgba(226, 220, 210, 0.6);
-}
-
-/* Premium Buttons (Linear style smooth 150ms ease) */
+/* Editorial Buttons */
 .btn-primary {
-  background-color: #4A7C59;
-  color: #FFFFFF;
-  border-radius: 10px;
+  background-color: #C1502E;
+  color: #F5F1E8;
+  border-radius: 4px;
   padding: 12px 24px;
-  font-weight: 600;
-  font-size: 0.875rem;
-  transition: all 150ms ease-in-out;
-  box-shadow: 0 2px 8px rgba(74, 124, 89, 0.25);
+  font-weight: 700;
+  font-size: 0.8125rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  transition: all 200ms cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 14px rgba(193, 80, 46, 0.3);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
+  cursor: pointer;
+  user-select: none;
 }
 
 .btn-primary:hover {
-  background-color: #2F533A;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 14px rgba(47, 83, 58, 0.3);
+  background-color: #A33F21;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(193, 80, 46, 0.45);
+}
+
+.btn-primary:active {
+  transform: scale(0.95) translateY(0);
 }
 
 .btn-secondary {
-  background-color: #F0ECE1;
-  color: #1D2921;
-  border-radius: 10px;
+  background-color: transparent;
+  color: inherit;
+  border-radius: 4px;
   padding: 12px 24px;
-  font-weight: 600;
-  font-size: 0.875rem;
-  border: 1px solid #E2DCD2;
-  transition: all 150ms ease-in-out;
+  font-weight: 700;
+  font-size: 0.8125rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  border: 1px solid rgba(212, 169, 74, 0.4);
+  transition: all 200ms cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: pointer;
+  user-select: none;
 }
 
 .btn-secondary:hover {
-  background-color: #E5DFC5;
-  border-color: #D6CEA5;
+  border-color: #D4A94A;
+  background-color: rgba(212, 169, 74, 0.1);
+  color: #D4A94A;
 }
 
-/* Linear-style Badges with Subtle Gradients */
-.badge-gradient-sage {
-  background: linear-gradient(135deg, #EBF2ED 0%, #D8E6DC 100%);
-  color: #2F533A;
-  border: 1px solid rgba(74, 124, 89, 0.2);
+.btn-secondary:active {
+  transform: scale(0.95);
 }
 
-.badge-gradient-rose {
-  background: linear-gradient(135deg, #FFF1F2 0%, #FFE4E6 100%);
-  color: #9F1239;
-  border: 1px solid rgba(225, 29, 72, 0.2);
+/* Editorial Cards & Panels */
+.card-dark {
+  background-color: #242424;
+  border: 1px solid #333333;
+  border-radius: 6px;
+  color: #F5F1E8;
 }
 
-.badge-gradient-amber {
-  background: linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%);
-  color: #92400E;
-  border: 1px solid rgba(217, 119, 6, 0.2);
+.card-light {
+  background-color: #F5F1E8;
+  border: 1px solid #E5DFD3;
+  border-radius: 6px;
+  color: #1A1A1A;
 }
 
-/* Animations */
+.card-elevated {
+  background-color: #F5F1E8;
+  border-radius: 6px;
+  border: 1px solid #E5DFD3;
+  transition: all 250ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.card-elevated:hover {
+  transform: translateY(-3px);
+  border-color: #C1502E;
+}
+
+.card-static {
+  background-color: #F5F1E8;
+  border-radius: 6px;
+  border: 1px solid #E5DFD3;
+}
+
+/* Gold & Terracotta Badges */
+.badge-gold {
+  background: rgba(212, 169, 74, 0.15);
+  color: #D4A94A;
+  border: 1px solid rgba(212, 169, 74, 0.4);
+}
+
+.badge-terracotta {
+  background: rgba(193, 80, 46, 0.15);
+  color: #C1502E;
+  border: 1px solid rgba(193, 80, 46, 0.4);
+}
+
+.badge-sage {
+  background: rgba(122, 148, 113, 0.15);
+  color: #7A9471;
+  border: 1px solid rgba(122, 148, 113, 0.4);
+}
+
+/* Editorial Animations */
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(8px); }
+  from { opacity: 0; transform: translateY(12px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
 .animate-fade-in {
-  animation: fadeIn 350ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: fadeIn 450ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-/* Leaflet Map Tweak */
 .leaflet-container {
-  border-radius: 16px;
+  border-radius: 6px;
 }

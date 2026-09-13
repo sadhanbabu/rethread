@@ -27,3 +27,14 @@ server/*.db
 server/*.db-shm
 server/*.db-wal
 .env
+
+# Temporary test scripts & captures
+capture_impact.js
+capture_impact.mjs
+scratch_capture.js
+scratch_capture.mjs
+verify_confirm_flow.mjs
+test_isolation.js
+test_registration.js
+verify_raham.js
+*.png

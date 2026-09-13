@@ -14,38 +14,38 @@ export default function AnimatedScoreRing({ score, size = 64, strokeWidth = 5 })
           cx={size / 2}
           cy={size / 2}
           r={radius}
-          stroke="#E2DCD2"
+          stroke="#333333"
           strokeWidth={strokeWidth}
           fill="transparent"
         />
 
-        {/* Animated Progress Ring */}
+        {/* Animated Gold Progress Ring */}
         <motion.circle
           cx={size / 2}
           cy={size / 2}
           r={radius}
-          stroke="url(#scoreGradient)"
+          stroke="url(#goldScoreGradient)"
           strokeWidth={strokeWidth}
           strokeDasharray={circumference}
           initial={{ strokeDashoffset: circumference }}
           animate={{ strokeDashoffset }}
-          transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
+          transition={{ duration: 1.4, ease: [0.16, 1, 0.3, 1] }}
           strokeLinecap="round"
           fill="transparent"
         />
 
         <defs>
-          <linearGradient id="scoreGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#87968B" />
-            <stop offset="100%" stopColor="#4A7C59" />
+          <linearGradient id="goldScoreGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#D4A94A" />
+            <stop offset="100%" stopColor="#C1502E" />
           </linearGradient>
         </defs>
       </svg>
 
       {/* Score Text */}
       <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-        <span className="text-sm font-black text-[#2F533A] font-serif leading-none">{score}%</span>
-        <span className="text-[8px] font-bold text-[#87968B] uppercase">Fit</span>
+        <span className="text-sm font-black text-[#D4A94A] font-serif leading-none tracking-tight">{score}%</span>
+        <span className="text-[7px] font-bold text-[#888888] uppercase tracking-widest mt-0.5">MATCH</span>
       </div>
     </div>
   );

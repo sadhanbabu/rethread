@@ -28,10 +28,10 @@ export default function Hero3DElement() {
     // Outer Wireframe Sphere (Earth representation)
     const sphereGeometry = new THREE.IcosahedronGeometry(1.6, 2);
     const sphereMaterial = new THREE.MeshStandardMaterial({
-      color: 0x4A7C59,
+      color: 0xC1502E,
       wireframe: true,
       transparent: true,
-      opacity: 0.35,
+      opacity: 0.45,
     });
     const sphereMesh = new THREE.Mesh(sphereGeometry, sphereMaterial);
     globeGroup.add(sphereMesh);
@@ -39,20 +39,20 @@ export default function Hero3DElement() {
     // Inner Core Sphere
     const innerGeometry = new THREE.SphereGeometry(1.2, 32, 32);
     const innerMaterial = new THREE.MeshStandardMaterial({
-      color: 0xEBF2ED,
-      roughness: 0.4,
-      metalness: 0.1,
+      color: 0x242424,
+      roughness: 0.3,
+      metalness: 0.6,
       transparent: true,
-      opacity: 0.7,
+      opacity: 0.85,
     });
     const innerMesh = new THREE.Mesh(innerGeometry, innerMaterial);
     globeGroup.add(innerMesh);
 
     // Orbital Nodes (NGO / Donor connection points)
-    const nodeCount = 12;
+    const nodeCount = 14;
     const nodesGroup = new THREE.Group();
     const nodeGeometry = new THREE.SphereGeometry(0.08, 16, 16);
-    const nodeMaterial = new THREE.MeshBasicMaterial({ color: 0x2F533A });
+    const nodeMaterial = new THREE.MeshBasicMaterial({ color: 0xD4A94A });
 
     for (let i = 0; i < nodeCount; i++) {
       const node = new THREE.Mesh(nodeGeometry, nodeMaterial);
@@ -65,10 +65,10 @@ export default function Hero3DElement() {
     globeGroup.add(nodesGroup);
 
     // Lights
-    const ambientLight = new THREE.AmbientLight(0xffffff, 1.2);
+    const ambientLight = new THREE.AmbientLight(0xffffff, 1.4);
     scene.add(ambientLight);
 
-    const dirLight = new THREE.DirectionalLight(0x4A7C59, 2);
+    const dirLight = new THREE.DirectionalLight(0xD4A94A, 2.5);
     dirLight.position.set(5, 5, 5);
     scene.add(dirLight);
 

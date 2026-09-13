@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 
-export default function TiltCard({ children, className = '', maxRotate = 6 }) {
+export default function TiltCard({ children, className = '', style = {}, maxRotate = 6 }) {
   const [rotateX, setRotateX] = useState(0);
   const [rotateY, setRotateY] = useState(0);
 
@@ -37,8 +37,9 @@ export default function TiltCard({ children, className = '', maxRotate = 6 }) {
       style={{
         transformStyle: 'preserve-3d',
         perspective: 1000,
+        ...style
       }}
-      className={`card-elevated ${className}`}
+      className={className || 'card-elevated'}
     >
       {children}
     </motion.div>

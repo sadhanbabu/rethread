@@ -1,5 +1,14 @@
 export const ITEM_CATEGORIES = [
   {
+    category: 'Bulk & Mixed Bundles',
+    items: [
+      'Bulk Menswear Bundle',
+      'Bulk Womenswear Bundle',
+      'Bulk Mixed (Men & Women) Bundle',
+      'Assorted Mixed Wardrobe'
+    ]
+  },
+  {
     category: 'Tops',
     items: ['T-Shirt', 'Shirt', 'Blouse', 'Hoodie', 'Sweater', 'Sweatshirt']
   },

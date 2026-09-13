@@ -13,9 +13,19 @@ db.pragma('journal_mode = WAL');
 // Initialize Tables
 function initDb() {
   db.exec(`
+    CREATE TABLE IF NOT EXISTS users (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      email TEXT UNIQUE NOT NULL,
+      password_hash TEXT NOT NULL,
+      account_type TEXT CHECK(account_type IN ('donor', 'receiver')) NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+
     CREATE TABLE IF NOT EXISTS ngos (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER,
       name TEXT NOT NULL,
+      type TEXT CHECK(type IN ('ngo', 'individual', 'community')) DEFAULT 'ngo',
       description TEXT,
       address TEXT,
       latitude REAL,
@@ -24,7 +34,8 @@ function initDb() {
       current_storage INTEGER DEFAULT 120,
       contact_email TEXT,
       phone TEXT,
-      image_url TEXT
+      image_url TEXT,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
     );
 
     CREATE TABLE IF NOT EXISTS ngo_needs (
@@ -44,6 +55,7 @@ function initDb() {
 
     CREATE TABLE IF NOT EXISTS items (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER,
       title TEXT NOT NULL,
       description TEXT,
       item_type TEXT NOT NULL,
@@ -57,7 +69,12 @@ function initDb() {
       latitude REAL,
       longitude REAL,
       status TEXT DEFAULT 'available',
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      confirmed_ngo_id INTEGER,
+      recycling_partner_name TEXT,
+      recycling_outcome TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
+      FOREIGN KEY (confirmed_ngo_id) REFERENCES ngos(id) ON DELETE SET NULL
     );
 
     CREATE TABLE IF NOT EXISTS matches (
@@ -88,6 +105,13 @@ function initDb() {
     );
   `);
 
+  // Safe migration checks for schema updates
+  try {
+    db.exec("ALTER TABLE items ADD COLUMN confirmed_ngo_id INTEGER;");
+  } catch (e) {
+    // Column already exists
+  }
+
   // Seed Data if empty
   const ngoCount = db.prepare('SELECT COUNT(*) as count FROM ngos').get().count;
   if (ngoCount === 0) {
@@ -99,8 +123,8 @@ function seedDatabase() {
   console.log('Seeding ReThread database with demo data...');
 
   const insertNgo = db.prepare(`
-    INSERT INTO ngos (name, description, address, latitude, longitude, max_capacity, current_storage, contact_email, phone, image_url)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO ngos (name, type, description, address, latitude, longitude, max_capacity, current_storage, contact_email, phone, image_url)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
   const insertNeed = db.prepare(`
@@ -118,10 +142,11 @@ function seedDatabase() {
     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
-  // Seed 6 NGOs (San Francisco coordinates)
+  // Seed Finders (NGOs, Individuals, Community Orgs with distinct IDs)
   const ngos = [
     {
       name: "Hope Haven Emergency Shelter",
+      type: "ngo",
       description: "Providing shelter, warmth, and clothing for families experiencing homelessness.",
       address: "745 Mission St, San Francisco, CA",
       latitude: 37.7858,
@@ -134,6 +159,7 @@ function seedDatabase() {
     },
     {
       name: "Urban Youth Outreach Center",
+      type: "ngo",
       description: "Supporting homeless teens and young adults with warm outerwear and job interview clothing.",
       address: "1230 Market St, San Francisco, CA",
       latitude: 37.7772,
@@ -145,31 +171,34 @@ function seedDatabase() {
       image: "https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&w=600&q=80"
     },
     {
-      name: "St. Vincent Family Transition Home",
-      description: "Helping mothers and children transition into stable housing with essential wardrobes.",
+      name: "Individual Recipient A (Maria S.)",
+      type: "individual",
+      description: "Family of 4 seeking winter jackets and kids footwear.",
       address: "240 Valencia St, San Francisco, CA",
       latitude: 37.7694,
       longitude: -122.4223,
-      max_capacity: 400,
-      current_storage: 140,
-      email: "contact@stvincenttransition.org",
+      max_capacity: 10,
+      current_storage: 2,
+      email: "maria.s@example.com",
       phone: "(415) 555-0821",
-      image: "https://images.unsplash.com/photo-1542810634-71277d95dcbb?auto=format&fit=crop&w=600&q=80"
+      image: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=600&q=80"
     },
     {
-      name: "Community Eco-Closet Initiative",
-      description: "Free community wardrobe for low-income residents and job seekers.",
+      name: "Individual Recipient B (David K.)",
+      type: "individual",
+      description: "Single parent looking for work clothing.",
       address: "880 Harrison St, San Francisco, CA",
       latitude: 37.7801,
       longitude: -122.4045,
-      max_capacity: 500,
-      current_storage: 210,
-      email: "hello@ecocloset.org",
+      max_capacity: 10,
+      current_storage: 1,
+      email: "david.k@example.com",
       phone: "(415) 555-0377",
-      image: "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&w=600&q=80"
+      image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=600&q=80"
     },
     {
       name: "Golden Gate Veteran Support",
+      type: "ngo",
       description: "Dignified clothing distribution for military veterans seeking career transitions.",
       address: "450 Golden Gate Ave, San Francisco, CA",
       latitude: 37.7816,
@@ -181,14 +210,15 @@ function seedDatabase() {
       image: "https://images.unsplash.com/photo-1509099836639-18ba1795216d?auto=format&fit=crop&w=600&q=80"
     },
     {
-      name: "Bay Area Children's Aid",
-      description: "Providing diapers, kids' jackets, sneakers, and school uniforms to families in need.",
+      name: "Bay Area Community Closet",
+      type: "community",
+      description: "Local neighborhood free closet and mutual aid organization.",
       address: "1600 Divisadero St, San Francisco, CA",
       latitude: 37.7845,
       longitude: -122.4395,
       max_capacity: 350,
       current_storage: 120,
-      email: "help@baychildrensaid.org",
+      email: "help@baycommunitycloset.org",
       phone: "(415) 555-0632",
       image: "https://images.unsplash.com/photo-1516627145497-ae6968895b74?auto=format&fit=crop&w=600&q=80"
     }
@@ -197,7 +227,7 @@ function seedDatabase() {
   const ngoIds = [];
   for (const ngo of ngos) {
     const res = insertNgo.run(
-      ngo.name, ngo.description, ngo.address, ngo.latitude, ngo.longitude,
+      ngo.name, ngo.type, ngo.description, ngo.address, ngo.latitude, ngo.longitude,
       ngo.max_capacity, ngo.current_storage, ngo.email, ngo.phone, ngo.image
     );
     ngoIds.push(res.lastInsertRowid);

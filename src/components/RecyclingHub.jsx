@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Recycle, Scissors, Factory, ShieldCheck, MapPin, Phone, ArrowRight, ExternalLink } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { API_BASE_URL } from '../config/api';
+import BrandedLoader from './BrandedLoader';
 
 export default function RecyclingHub() {
   const [partners, setPartners] = useState([]);
@@ -25,126 +27,153 @@ export default function RecyclingHub() {
 
   if (loading) {
     return (
-      <div className="max-w-[1200px] mx-auto px-6 py-24 text-center space-y-4">
-        <div className="w-10 h-10 border-3 border-amber-600 border-t-transparent rounded-full animate-spin mx-auto" />
-        <p className="text-sm font-semibold text-amber-950">Loading Textile Recycling Network...</p>
+      <div className="max-w-[1300px] mx-auto px-6 py-24 text-center">
+        <BrandedLoader text="LOADING RECYCLING NETWORK..." />
       </div>
     );
   }
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.08
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 15 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.35, ease: [0.16, 1, 0.3, 1] } }
+  };
+
   return (
-    <div className="max-w-[1200px] mx-auto px-6 py-12 space-y-12 animate-fade-in">
+    <div className="max-w-[1300px] mx-auto px-4 sm:px-8 py-12 space-y-12">
       
       {/* Hero Banner */}
-      <div className="bg-gradient-to-b from-amber-950 via-amber-900 to-[#1D2921] rounded-[24px] p-10 sm:p-14 text-white shadow-lg relative overflow-hidden">
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.4 }}
+        className="bg-[#1A1A1A] rounded-sm p-10 sm:p-14 text-[#F5F1E8] border border-[#333333] relative overflow-hidden"
+      >
         <div className="max-w-3xl space-y-6 relative z-10">
-          <div className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-white/10 text-amber-200 text-xs font-semibold backdrop-blur-md">
-            <Recycle className="w-4 h-4 text-amber-300" strokeWidth={2} />
-            <span>CIRCULAR TEXTILE RECOVERY NETWORK</span>
-          </div>
+          <p className="editorial-label text-[#D4A94A]">CIRCULAR RECOVERY NETWORK</p>
 
-          <h1 className="font-serif text-4xl sm:text-6xl font-bold text-white tracking-tight leading-[1.15]">
+          <h1 className="font-serif text-4xl sm:text-6xl font-black tracking-tight leading-[1.05]">
             Zero Garment Waste to Landfill.
           </h1>
 
-          <p className="text-base sm:text-lg text-amber-100/90 font-normal leading-[1.6]">
+          <p className="text-sm sm:text-base text-[#AAAAAA] font-normal leading-[1.7]">
             When donors upload items marked <strong>"Needs Repair"</strong> or heavily worn, ReThread automatically diverts them to specialized material recovery labs, upcycling studios, and industrial fiber mills.
           </p>
         </div>
-      </div>
+      </motion.div>
 
       {/* Auto Routed Items Queue */}
-      <div className="card-static p-8 space-y-6">
-        <div className="flex items-center justify-between border-b border-[#EAE5DC] pb-4">
+      <div className="card-dark p-8 space-y-6 border border-[#333333]">
+        <div className="flex items-center justify-between border-b border-[#333333] pb-4">
           <div>
-            <h2 className="font-serif text-2xl font-bold text-[#1D2921]">Auto-Routed Repair & Upcycle Items</h2>
-            <p className="text-xs text-[#637367] mt-0.5">Garments diverted from general shelter queues directly for material processing</p>
+            <p className="editorial-label text-[#C1502E]">MATERIAL RECOVERY QUEUE</p>
+            <h2 className="font-serif text-3xl font-black text-[#F5F1E8]">Auto-Routed Repair & Upcycle Items</h2>
           </div>
-          <span className="px-3.5 py-1.5 rounded-full badge-gradient-amber text-xs font-bold">
-            {routedItems.length} Diverted Garments
+          <span className="badge-gold px-3.5 py-1.5 text-[10px] font-bold tracking-widest uppercase">
+            {routedItems.length} DIVERTED GARMENTS
           </span>
         </div>
 
         {routedItems.length === 0 ? (
-          <div className="py-12 text-center space-y-3 bg-[#FAF8F5] rounded-2xl border border-dashed border-[#E2DCD2]">
-            <ShieldCheck className="w-8 h-8 text-emerald-600 mx-auto" strokeWidth={1.75} />
-            <p className="text-sm font-bold text-[#1D2921]">No damaged garments currently pending</p>
-            <p className="text-xs text-[#637367]">Try uploading an item with condition "Needs Repair" in the Donor Portal!</p>
+          <div className="py-12 text-center space-y-3 bg-[#1A1A1A] rounded-sm border border-dashed border-[#333333]">
+            <ShieldCheck className="w-8 h-8 text-[#7A9471] mx-auto" strokeWidth={1.75} />
+            <p className="font-serif text-xl font-black text-[#F5F1E8]">No damaged garments currently pending</p>
+            <p className="text-xs text-[#AAAAAA]">Upload an item with condition "Needs Repair" in the Donor Portal to test auto-routing!</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <motion.div 
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+            className="grid grid-cols-1 md:grid-cols-2 gap-6"
+          >
             {routedItems.map((item) => (
-              <div key={item.id} className="card-elevated p-6 space-y-4">
+              <motion.div key={item.id} variants={itemVariants} className="bg-[#1A1A1A] p-6 rounded-sm border border-[#333333] space-y-4">
                 <div className="flex items-start space-x-4">
                   <img
                     src={item.photo_url}
                     alt={item.title}
-                    className="w-18 h-18 rounded-2xl object-cover border border-[#E2DCD2] shrink-0 shadow-sm"
+                    className="w-18 h-18 rounded-sm object-cover border border-[#333333] shrink-0"
                     onError={(e) => { e.target.src = "https://images.unsplash.com/photo-1541099649105-f69ad21f3246?auto=format&fit=crop&w=600&q=80"; }}
                   />
                   <div className="space-y-1 min-w-0 flex-1">
-                    <div className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-md badge-gradient-amber text-[10px] font-bold">
-                      <Recycle className="w-3 h-3 text-amber-700" />
-                      <span>{item.condition}</span>
-                    </div>
-                    <h4 className="font-serif text-base font-bold text-[#1D2921] truncate">{item.title}</h4>
-                    <p className="text-xs text-[#637367]">Type: {item.item_type} • Size: {item.size}</p>
-                    <p className="text-[11px] text-[#87968B]">Donor: {item.donor_name}</p>
+                    <span className="badge-terracotta px-2 py-0.5 text-[9px] font-bold tracking-widest uppercase inline-block">
+                      {item.condition}
+                    </span>
+                    <h4 className="font-serif text-lg font-bold text-[#F5F1E8] truncate">{item.title}</h4>
+                    <p className="text-xs text-[#AAAAAA]">Type: {item.item_type} • Size: {item.size}</p>
+                    <p className="text-[11px] text-[#888888]">Donor: {item.donor_name}</p>
                   </div>
                 </div>
 
-                <div className="bg-amber-50 p-3 rounded-xl border border-amber-200 text-xs text-amber-950 flex items-center justify-between">
-                  <span>Target Lab: <strong>Bay Area Fiber Recovery</strong></span>
-                  <span className="text-[10px] font-bold bg-amber-200 text-amber-900 px-2.5 py-0.5 rounded-full">
-                    Industrial Shredding
+                <div className="bg-[#242424] p-3 rounded-sm border border-[#333333] text-xs text-[#F5F1E8] flex items-center justify-between">
+                  <span>Target Lab: <strong className="text-[#D4A94A]">Bay Area Fiber Recovery</strong></span>
+                  <span className="text-[9px] font-bold bg-[#C1502E] text-white px-2.5 py-0.5 rounded-sm uppercase tracking-wider">
+                    Shredding
                   </span>
                 </div>
-              </div>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         )}
       </div>
 
       {/* Certified Recycling Partners Directory */}
-      <div className="card-static p-8 space-y-6">
-        <div className="border-b border-[#EAE5DC] pb-4">
-          <h2 className="font-serif text-2xl font-bold text-[#1D2921]">Certified Textile Recycling Partners</h2>
-          <p className="text-xs text-[#637367] mt-0.5">Local upcyclers, zipper repair shops, and mechanical fiber processors</p>
+      <div className="card-dark p-8 space-y-6 border border-[#333333]">
+        <div className="border-b border-[#333333] pb-4">
+          <p className="editorial-label text-[#D4A94A]">DIRECTORY</p>
+          <h2 className="font-serif text-3xl font-black text-[#F5F1E8]">Certified Textile Recycling Partners</h2>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <motion.div 
+          variants={containerVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true }}
+          className="grid grid-cols-1 md:grid-cols-3 gap-6"
+        >
           {partners.map((partner) => (
-            <div key={partner.id} className="card-elevated p-6 space-y-4">
+            <motion.div key={partner.id} variants={itemVariants} className="bg-[#1A1A1A] p-6 rounded-sm border border-[#333333] space-y-4">
               <img
                 src={partner.image_url}
                 alt={partner.name}
-                className="w-full h-40 rounded-2xl object-cover border border-[#E2DCD2] shadow-sm"
+                className="w-full h-40 rounded-sm object-cover border border-[#333333]"
                 onError={(e) => { e.target.src = "https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?auto=format&fit=crop&w=600&q=80"; }}
               />
 
               <div className="space-y-1">
-                <h3 className="font-serif text-lg font-bold text-[#1D2921]">{partner.name}</h3>
-                <p className="text-xs font-semibold text-amber-900">{partner.specialty}</p>
+                <h3 className="font-serif text-xl font-bold text-[#F5F1E8]">{partner.name}</h3>
+                <p className="text-xs font-bold text-[#D4A94A] uppercase tracking-wider">{partner.specialty}</p>
               </div>
 
-              <div className="space-y-1.5 text-xs text-[#637367]">
+              <div className="space-y-1.5 text-xs text-[#AAAAAA]">
                 <p className="flex items-center space-x-1.5">
-                  <MapPin className="w-3.5 h-3.5 text-[#4A7C59] shrink-0" strokeWidth={1.75} />
+                  <MapPin className="w-3.5 h-3.5 text-[#C1502E] shrink-0" strokeWidth={1.75} />
                   <span>{partner.address}</span>
                 </p>
                 <p className="flex items-center space-x-1.5">
-                  <Phone className="w-3.5 h-3.5 text-[#4A7C59] shrink-0" strokeWidth={1.75} />
+                  <Phone className="w-3.5 h-3.5 text-[#C1502E] shrink-0" strokeWidth={1.75} />
                   <span>{partner.phone}</span>
                 </p>
               </div>
 
-              <div className="p-3 rounded-xl bg-[#FAF8F5] border border-[#E2DCD2] text-xs">
-                <span className="font-bold text-[#1D2921] block mb-1">Materials Accepted:</span>
-                <p className="text-[#637367] text-[11px]">{partner.materials_accepted}</p>
+              <div className="p-3 rounded-sm bg-[#242424] border border-[#333333] text-xs">
+                <span className="editorial-label text-[8px] text-[#888888] block mb-1">MATERIALS ACCEPTED:</span>
+                <p className="text-[#F5F1E8] text-[11px]">{partner.materials_accepted}</p>
               </div>
-            </div>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       </div>
 
     </div>

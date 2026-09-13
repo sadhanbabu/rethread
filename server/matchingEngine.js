@@ -27,61 +27,84 @@ export function scoreMatch(item, ngo, need) {
 
   reasonParts.push(`${distanceKm}km away`);
 
-  // Distance Score (max 25 pts)
-  const distanceScore = Math.max(0, 25 - distanceKm * 2.5);
+  // 1. Distance Calculation (max 20 pts) - 6 pts penalty per km
+  const distanceScore = Math.max(0, 20 - distanceKm * 6.0);
   score += distanceScore;
 
-  // 2. Attribute Matching
+  // 2. Attribute Matching (max 25 pts)
   const itemTypeNorm = item.item_type.toLowerCase();
   const needTypeNorm = need.item_type.toLowerCase();
   
-  if (itemTypeNorm === needTypeNorm || itemTypeNorm.includes(needTypeNorm) || needTypeNorm.includes(itemTypeNorm)) {
-    score += 30;
+  if (itemTypeNorm === needTypeNorm) {
+    score += 25;
     reasonParts.push(`${item.item_type} match`);
-  } else {
-    score += 10;
-  }
-
-  // Size Match
-  if (item.size.toLowerCase() === need.size.toLowerCase() || need.size === 'Any') {
-    score += 20;
-    reasonParts.push(`Size ${item.size}`);
+  } else if (itemTypeNorm.includes(needTypeNorm) || needTypeNorm.includes(itemTypeNorm)) {
+    score += 15;
+    reasonParts.push(`${item.item_type} similar fit`);
   } else {
     score += 5;
   }
 
-  // Gender Match
-  if (item.gender.toLowerCase() === need.gender.toLowerCase() || need.gender === 'Unisex' || item.gender === 'Unisex') {
+  // Size Match (max 15 pts)
+  if (item.size.toLowerCase() === need.size.toLowerCase()) {
     score += 15;
-    reasonParts.push(`${need.gender} category`);
-  }
-
-  // Season Match
-  if (item.season === need.season || need.season === 'All-Season') {
+    reasonParts.push(`Size ${item.size}`);
+  } else if (need.size === 'Any') {
     score += 10;
+    reasonParts.push(`Flexible size`);
+  } else {
+    score += 3;
   }
 
-  // 3. Demand Urgency
+  // Gender Match (max 12 pts)
+  if (item.gender.toLowerCase() === need.gender.toLowerCase()) {
+    score += 12;
+    reasonParts.push(`${need.gender} category`);
+  } else if (need.gender === 'Unisex' || item.gender === 'Unisex') {
+    score += 8;
+    reasonParts.push(`Unisex category`);
+  } else {
+    score += 2;
+  }
+
+  // Season Match (max 8 pts)
+  if (item.season === need.season) {
+    score += 8;
+  } else if (need.season === 'All-Season') {
+    score += 5;
+  } else {
+    score += 2;
+  }
+
+  // 3. Demand Urgency (max 20 pts)
   if (need.urgency === 'High') {
-    score += 30;
+    score += 20;
     reasonParts.push('Urgent shelter need');
   } else if (need.urgency === 'Medium') {
-    score += 15;
+    score += 10;
     reasonParts.push('Medium priority');
   } else {
-    score += 5;
+    score += 4;
   }
 
-  // 4. Storage Capacity Penalty
+  // 4. Storage Capacity & Batch Quantity Fit Check
+  const batchQuantity = Math.max(1, parseInt(item.quantity, 10) || 1);
+  const remainingCapacity = Math.max(0, (ngo.max_capacity || 0) - (ngo.current_storage || 0));
   const capacityRatio = ngo.max_capacity > 0 ? (ngo.current_storage / ngo.max_capacity) : 0;
-  if (capacityRatio >= 0.95) {
-    score -= 45;
+
+  if (remainingCapacity < batchQuantity) {
+    // Heavy penalty if recipient cannot physically store the requested batch quantity
+    const deficit = batchQuantity - remainingCapacity;
+    score -= Math.min(80, 40 + Math.ceil(deficit / 2));
+    reasonParts.push(`Insufficient capacity for ${batchQuantity} items (has ${remainingCapacity} free)`);
+  } else if (capacityRatio >= 0.95) {
+    score -= 35;
     reasonParts.push('Storage critical (95% full)');
   } else if (capacityRatio >= 0.8) {
-    score -= 20;
+    score -= 15;
     reasonParts.push('Storage high (80% full)');
   } else {
-    reasonParts.push('Storage available');
+    reasonParts.push(`Storage available (${remainingCapacity} slots free)`);
   }
 
   // 5. Need fulfilled check
@@ -90,7 +113,7 @@ export function scoreMatch(item, ngo, need) {
     score -= 100;
   }
 
-  const finalScore = Math.min(99, Math.max(10, Math.round(score)));
+  const finalScore = Math.min(98, Math.max(10, Math.round(score)));
   const reasoning = reasonParts.slice(0, 4).join(' • ');
 
   return {
@@ -111,7 +134,7 @@ export function findTopMatches(db, item) {
   }
 
   const needs = db.prepare(`
-    SELECT n.*, g.name as ngo_name, g.address as ngo_address, g.latitude as ngo_lat, 
+    SELECT n.*, g.name as ngo_name, g.type as ngo_type, g.address as ngo_address, g.latitude as ngo_lat, 
            g.longitude as ngo_lng, g.max_capacity, g.current_storage, g.image_url as ngo_image, g.phone, g.contact_email
     FROM ngo_needs n
     JOIN ngos g ON n.ngo_id = g.id
@@ -124,6 +147,7 @@ export function findTopMatches(db, item) {
     const ngoObj = {
       id: need.ngo_id,
       name: need.ngo_name,
+      type: need.ngo_type || 'ngo',
       address: need.ngo_address,
       latitude: need.ngo_lat,
       longitude: need.ngo_lng,

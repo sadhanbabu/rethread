@@ -1,25 +1,54 @@
 import React, { useState, useEffect } from 'react';
-import { Building2, Plus, CheckCircle2, XCircle, AlertCircle, PackageCheck, Layers, Settings, Trash2, ShieldAlert } from 'lucide-react';
+import { Building2, Plus, CheckCircle2, XCircle, AlertCircle, PackageCheck, Layers, Settings, Trash2, ShieldAlert, User, Users, Home } from 'lucide-react';
 import { ITEM_CATEGORIES } from '../constants/itemTypes';
 import { API_BASE_URL } from '../config/api';
+import FinderRegistrationModal from './FinderRegistrationModal';
 
-export default function NgoDashboard({ onDataUpdated }) {
+export default function NgoDashboard({ finderType = 'ngo', activeSubTab, initialSelectedNgoId, currentUser, onDataUpdated }) {
   const [ngos, setNgos] = useState([]);
-  const [selectedNgoId, setSelectedNgoId] = useState(1);
+  const [selectedNgoId, setSelectedNgoId] = useState(initialSelectedNgoId || (currentUser?.profile?.id ? currentUser.profile.id : null));
   const [selectedNgo, setSelectedNgo] = useState(null);
   const [incomingMatches, setIncomingMatches] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // New Need Form Modal
+  // Sync selectedNgoId if initialSelectedNgoId or currentUser changes
+  useEffect(() => {
+    if (initialSelectedNgoId) {
+      setSelectedNgoId(initialSelectedNgoId);
+    } else if (currentUser?.profile?.id) {
+      setSelectedNgoId(currentUser.profile.id);
+    }
+  }, [initialSelectedNgoId, currentUser]);
+
+  // Individual Household Size State
+  const [householdSize, setHouseholdSize] = useState(4);
+
+  // New Need Form Modal & Register Modal
   const [showNeedModal, setShowNeedModal] = useState(false);
+  const [showRegisterModal, setShowRegisterModal] = useState(false);
+
+  const handleRegisterSuccess = (newRecord) => {
+    setShowRegisterModal(false);
+    if (newRecord && newRecord.id) {
+      setSelectedNgoId(newRecord.id);
+    }
+    fetchNgoData();
+    if (onDataUpdated) onDataUpdated();
+  };
+
+  useEffect(() => {
+    if (activeSubTab === 'post-need') {
+      setShowNeedModal(true);
+    }
+  }, [activeSubTab]);
   const [newNeed, setNewNeed] = useState({
     item_type: 'Jacket',
     size: 'L',
     gender: 'Men',
     season: 'Winter',
-    quantity_needed: 10,
+    quantity_needed: finderType === 'individual' ? 2 : 10,
     urgency: 'High',
-    notes: 'Urgent winter outerwear request'
+    notes: finderType === 'individual' ? 'Needed for household member' : 'Urgent winter outerwear request'
   });
 
   // Capacity edit state
@@ -28,20 +57,32 @@ export default function NgoDashboard({ onDataUpdated }) {
 
   const fetchNgoData = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/ngos`);
+      const res = await fetch(`${API_BASE_URL}/api/ngos?type=${finderType}`);
       const data = await res.json();
       setNgos(data);
 
-      const curr = data.find(n => n.id === Number(selectedNgoId)) || data[0];
-      if (curr) {
-        setSelectedNgo(curr);
-        setCapacityInput(curr.max_capacity);
+      let curr = null;
+      if (currentUser?.profile?.id) {
+        curr = data.find(n => n.id === Number(currentUser.profile.id));
+      }
+      if (!curr && selectedNgoId) {
+        curr = data.find(n => n.id === Number(selectedNgoId));
+      }
+      if (!curr) {
+        curr = data[0];
       }
 
       if (curr) {
+        setSelectedNgo(curr);
+        setSelectedNgoId(curr.id);
+        setCapacityInput(curr.max_capacity);
+
         const matchRes = await fetch(`${API_BASE_URL}/api/ngo-matches/${curr.id}`);
         const matchesData = await matchRes.json();
         setIncomingMatches(matchesData);
+      } else {
+        setSelectedNgo(null);
+        setIncomingMatches([]);
       }
     } catch (err) {
       console.error('Error fetching NGO data:', err);
@@ -52,7 +93,7 @@ export default function NgoDashboard({ onDataUpdated }) {
 
   useEffect(() => {
     fetchNgoData();
-  }, [selectedNgoId]);
+  }, [selectedNgoId, finderType]);
 
   const handleUpdateCapacity = async (e) => {
     e.preventDefault();
@@ -128,13 +169,26 @@ export default function NgoDashboard({ onDataUpdated }) {
     return (
       <div className="max-w-[1200px] mx-auto px-6 py-24 text-center space-y-4">
         <div className="w-10 h-10 border-3 border-[#4A7C59] border-t-transparent rounded-full animate-spin mx-auto" />
-        <p className="text-sm font-semibold text-[#637367]">Loading NGO Dashboard...</p>
+        <p className="text-sm font-semibold text-[#637367]">Loading Recipient Portal...</p>
       </div>
     );
   }
 
   const capacityRatio = Math.round((selectedNgo.current_storage / selectedNgo.max_capacity) * 100);
   const isCapacityHigh = capacityRatio >= 80;
+
+  // Dynamic Labels Based on Finder Role
+  const badgeLabel = finderType === 'individual'
+    ? 'INDIVIDUAL RECIPIENT'
+    : finderType === 'community'
+    ? 'COMMUNITY ORGANIZER'
+    : 'VERIFIED RECIPIENT SHELTER';
+
+  const needsSectionTitle = finderType === 'individual'
+    ? 'What You Need'
+    : finderType === 'community'
+    ? 'Community Closet Needs'
+    : "Your Shelter's Needs";
 
   return (
     <div className="max-w-[1200px] mx-auto px-6 py-12 space-y-12 animate-fade-in">
@@ -149,18 +203,20 @@ export default function NgoDashboard({ onDataUpdated }) {
             onError={(e) => { e.target.src = "https://images.unsplash.com/photo-1593113598332-cd288d649433?auto=format&fit=crop&w=600&q=80"; }}
           />
           <div className="space-y-1">
-            <span className="px-3 py-1 rounded-full badge-gradient-sage text-xs font-bold">
-              VERIFIED RECIPIENT SHELTER
+            <span className="px-3 py-1 rounded-full badge-gradient-sage text-xs font-bold uppercase">
+              {badgeLabel}
             </span>
-            <h1 className="font-serif text-3xl font-bold text-[#1D2921]">{selectedNgo.name}</h1>
+            <h1 className="font-serif text-3xl font-bold text-[#1D2921]">
+              {finderType === 'individual' ? `${selectedNgo.name} (Recipient Profile)` : selectedNgo.name}
+            </h1>
             <p className="text-xs text-[#637367]">{selectedNgo.address}</p>
           </div>
         </div>
 
-        {/* NGO Switcher */}
+        {/* Demo Account Switcher */}
         <div className="w-full md:w-80 bg-[#FAF8F5] p-3.5 rounded-2xl border border-[#E2DCD2] space-y-1.5">
           <label className="text-[11px] font-bold uppercase tracking-wider text-[#637367] block">
-            Select Shelter Portal:
+            Demo Account Switcher:
           </label>
           <select
             value={selectedNgoId}
@@ -176,75 +232,116 @@ export default function NgoDashboard({ onDataUpdated }) {
         </div>
       </div>
 
-      {/* Row 1: Storage Capacity Meter & Needs Summary */}
+      {/* Row 1: Storage Capacity (or Household Size for Individual) & Needs Summary */}
       <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
         
-        {/* Storage Capacity Meter Card */}
-        <div className="md:col-span-6 card-static p-8 space-y-6">
-          <div className="flex items-center justify-between">
+        {/* Storage Capacity / Household Size Card */}
+        {finderType === 'individual' ? (
+          /* INDIVIDUAL TYPE: HOUSEHOLD SIZE INSTEAD OF STORAGE CAPACITY (REQUIREMENT 3) */
+          <div className="md:col-span-6 card-static p-8 space-y-5">
             <div className="flex items-center space-x-3">
               <div className="w-10 h-10 rounded-2xl bg-[#EBF2ED] text-[#4A7C59] flex items-center justify-center">
-                <Layers className="w-5 h-5" strokeWidth={1.75} />
+                <Home className="w-5 h-5" strokeWidth={1.75} />
               </div>
               <div>
-                <h3 className="font-serif text-xl font-bold text-[#1D2921]">Storage Capacity</h3>
-                <p className="text-xs text-[#637367]">Current inventory threshold</p>
+                <h3 className="font-serif text-xl font-bold text-[#1D2921]">Household Size & Specs</h3>
+                <p className="text-xs text-[#637367]">Personal garment assistance context</p>
               </div>
             </div>
 
-            <button
-              onClick={() => setEditingCapacity(!editingCapacity)}
-              className="p-2 rounded-xl text-[#637367] hover:bg-[#FAF8F5] transition-colors"
-              title="Edit Capacity Limit"
-            >
-              <Settings className="w-4 h-4" strokeWidth={1.75} />
-            </button>
-          </div>
-
-          {editingCapacity ? (
-            <form onSubmit={handleUpdateCapacity} className="flex items-center space-x-3 bg-[#FAF8F5] p-3.5 rounded-2xl border border-[#E2DCD2]">
-              <input
-                type="number"
-                min="10"
-                max="5000"
-                value={capacityInput}
-                onChange={(e) => setCapacityInput(e.target.value)}
-                className="w-full px-4 py-2 rounded-xl border border-[#E2DCD2] bg-white text-xs font-bold focus:outline-none"
-              />
-              <button
-                type="submit"
-                className="btn-primary py-2 px-4 text-xs shrink-0"
-              >
-                Save
-              </button>
-            </form>
-          ) : (
-            <div className="space-y-3">
-              <div className="flex items-baseline justify-between text-sm">
-                <span className="font-medium text-[#637367]">Occupied Inventory</span>
-                <span className="font-bold text-[#1D2921]">
-                  {selectedNgo.current_storage} / {selectedNgo.max_capacity} items ({capacityRatio}%)
-                </span>
-              </div>
-
-              <div className="w-full bg-[#F0ECE1] h-3.5 rounded-full overflow-hidden">
-                <div
-                  className={`h-full rounded-full transition-all duration-500 ${
-                    isCapacityHigh ? 'bg-amber-500' : 'bg-[#4A7C59]'
-                  }`}
-                  style={{ width: `${Math.min(100, capacityRatio)}%` }}
-                />
-              </div>
-
-              {isCapacityHigh && (
-                <div className="flex items-center space-x-2.5 p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs font-medium">
-                  <ShieldAlert className="w-4 h-4 text-amber-600 shrink-0" />
-                  <span>Storage limit near max! Algorithm will adjust matching priority to prevent shelter overflow.</span>
+            <div className="bg-[#FAF8F5] p-4 rounded-2xl border border-[#E2DCD2] space-y-3">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-semibold text-[#637367]">Household Members:</span>
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={() => setHouseholdSize(Math.max(1, householdSize - 1))}
+                    className="w-7 h-7 rounded-lg bg-white border border-[#E2DCD2] text-xs font-bold hover:bg-gray-100"
+                  >
+                    -
+                  </button>
+                  <span className="font-serif text-base font-bold text-[#1D2921]">{householdSize} members</span>
+                  <button
+                    onClick={() => setHouseholdSize(householdSize + 1)}
+                    className="w-7 h-7 rounded-lg bg-white border border-[#E2DCD2] text-xs font-bold hover:bg-gray-100"
+                  >
+                    +
+                  </button>
                 </div>
-              )}
+              </div>
+
+              <p className="text-[11px] text-[#637367]">
+                Individual requests are capped at 1-3 items per submission to prioritize fair distribution.
+              </p>
             </div>
-          )}
-        </div>
+          </div>
+        ) : (
+          /* NGO / SHELTER TYPE: STORAGE CAPACITY METER */
+          <div className="md:col-span-6 card-static p-8 space-y-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 rounded-2xl bg-[#EBF2ED] text-[#4A7C59] flex items-center justify-center">
+                  <Layers className="w-5 h-5" strokeWidth={1.75} />
+                </div>
+                <div>
+                  <h3 className="font-serif text-xl font-bold text-[#1D2921]">Storage Capacity</h3>
+                  <p className="text-xs text-[#637367]">Current shelter inventory threshold</p>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setEditingCapacity(!editingCapacity)}
+                className="p-2 rounded-xl text-[#637367] hover:bg-[#FAF8F5] transition-colors"
+                title="Edit Capacity Limit"
+              >
+                <Settings className="w-4 h-4" strokeWidth={1.75} />
+              </button>
+            </div>
+
+            {editingCapacity ? (
+              <form onSubmit={handleUpdateCapacity} className="flex items-center space-x-3 bg-[#FAF8F5] p-3.5 rounded-2xl border border-[#E2DCD2]">
+                <input
+                  type="number"
+                  min="10"
+                  max="5000"
+                  value={capacityInput}
+                  onChange={(e) => setCapacityInput(e.target.value)}
+                  className="w-full px-4 py-2 rounded-xl border border-[#E2DCD2] bg-white text-xs font-bold focus:outline-none"
+                />
+                <button
+                  type="submit"
+                  className="btn-primary py-2 px-4 text-xs shrink-0"
+                >
+                  Save
+                </button>
+              </form>
+            ) : (
+              <div className="space-y-3">
+                <div className="flex items-baseline justify-between text-sm">
+                  <span className="font-medium text-[#637367]">Occupied Storage Space</span>
+                  <span className="font-bold text-[#1D2921]">
+                    {selectedNgo.current_storage} / {selectedNgo.max_capacity} items ({capacityRatio}%)
+                  </span>
+                </div>
+
+                <div className="w-full bg-[#F0ECE1] h-3.5 rounded-full overflow-hidden">
+                  <div
+                    className={`h-full rounded-full transition-all duration-500 ${
+                      isCapacityHigh ? 'bg-amber-500' : 'bg-[#4A7C59]'
+                    }`}
+                    style={{ width: `${Math.min(100, capacityRatio)}%` }}
+                  />
+                </div>
+
+                {isCapacityHigh && (
+                  <div className="flex items-center space-x-2.5 p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs font-medium">
+                    <ShieldAlert className="w-4 h-4 text-amber-600 shrink-0" />
+                    <span>Storage limit near max! Matching algorithm will adjust routing to prevent overflow.</span>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Needs Overview Card */}
         <div className="md:col-span-6 card-static p-8 flex flex-col justify-between space-y-6">
@@ -254,8 +351,8 @@ export default function NgoDashboard({ onDataUpdated }) {
                 <PackageCheck className="w-5 h-5" strokeWidth={1.75} />
               </div>
               <div>
-                <h3 className="font-serif text-xl font-bold text-[#1D2921]">Needs Overview</h3>
-                <p className="text-xs text-[#637367]">Active requests posted for donors</p>
+                <h3 className="font-serif text-xl font-bold text-[#1D2921]">{needsSectionTitle} Overview</h3>
+                <p className="text-xs text-[#637367]">Active clothing requests</p>
               </div>
             </div>
 
@@ -264,13 +361,13 @@ export default function NgoDashboard({ onDataUpdated }) {
               className="btn-primary py-2.5 px-4 text-xs"
             >
               <Plus className="w-4 h-4" strokeWidth={2} />
-              <span>Post New Need</span>
+              <span>Post a Need</span>
             </button>
           </div>
 
           <div className="grid grid-cols-3 gap-4 text-center">
             <div className="p-4 rounded-2xl bg-[#FAF8F5] border border-[#E2DCD2]">
-              <span className="text-xs text-[#637367] font-medium block mb-1">Total Needs</span>
+              <span className="text-xs text-[#637367] font-medium block mb-1">Posted Needs</span>
               <span className="font-serif text-2xl font-bold text-[#1D2921]">{selectedNgo.needs?.length || 0}</span>
             </div>
             <div className="p-4 rounded-2xl badge-gradient-rose">
@@ -295,7 +392,7 @@ export default function NgoDashboard({ onDataUpdated }) {
         <div className="flex items-center justify-between border-b border-[#EAE5DC] pb-4">
           <div>
             <h2 className="font-serif text-2xl font-bold text-[#1D2921]">Incoming Matched Donations</h2>
-            <p className="text-xs text-[#637367] mt-0.5">Review items matched by algorithm. Click Accept to decrement requested item count</p>
+            <p className="text-xs text-[#637367] mt-0.5">Review items matched by algorithm. Click Accept to confirm receipt & decrement needed quantity</p>
           </div>
           <span className="px-3.5 py-1.5 rounded-full bg-[#4A7C59] text-white text-xs font-bold shadow-sm">
             {incomingMatches.length} Pending
@@ -306,7 +403,7 @@ export default function NgoDashboard({ onDataUpdated }) {
           <div className="py-12 text-center space-y-3 bg-[#FAF8F5] rounded-2xl border border-dashed border-[#E2DCD2]">
             <CheckCircle2 className="w-8 h-8 text-[#87968B] mx-auto" strokeWidth={1.75} />
             <p className="text-sm font-bold text-[#1D2921]">No pending incoming donations</p>
-            <p className="text-xs text-[#637367]">Upload a new item in the Donor Portal tab to trigger real-time matching!</p>
+            <p className="text-xs text-[#637367]">Upload a new garment in "Donate a Garment" or post a new request above!</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -362,12 +459,12 @@ export default function NgoDashboard({ onDataUpdated }) {
         )}
       </div>
 
-      {/* Row 3: Active NGO Needs List */}
+      {/* Row 3: Active Needs List */}
       <div className="card-static p-8 space-y-6">
         <div className="flex items-center justify-between border-b border-[#EAE5DC] pb-4">
           <div>
-            <h2 className="font-serif text-2xl font-bold text-[#1D2921]">Posted Needs List</h2>
-            <p className="text-xs text-[#637367] mt-0.5">Active garment requests for {selectedNgo.name}</p>
+            <h2 className="font-serif text-2xl font-bold text-[#1D2921]">{needsSectionTitle} List</h2>
+            <p className="text-xs text-[#637367] mt-0.5">Garments currently requested from donors</p>
           </div>
         </div>
 
@@ -453,7 +550,6 @@ export default function NgoDashboard({ onDataUpdated }) {
             </div>
 
             <form onSubmit={handleAddNeed} className="space-y-4">
-              {/* EXPANDED ITEM TYPE DROPDOWN FOR NGO MODAL */}
               <div>
                 <label className="block text-xs font-bold text-[#1D2921] uppercase mb-1">Item Type</label>
                 <select
@@ -492,7 +588,7 @@ export default function NgoDashboard({ onDataUpdated }) {
                   <input
                     type="number"
                     min="1"
-                    max="200"
+                    max={finderType === 'individual' ? 5 : 200}
                     value={newNeed.quantity_needed}
                     onChange={(e) => setNewNeed({ ...newNeed, quantity_needed: Number(e.target.value) })}
                     className="w-full px-3.5 py-2.5 rounded-xl border border-[#E2DCD2] bg-[#FAF8F5] text-xs font-semibold"
@@ -559,6 +655,14 @@ export default function NgoDashboard({ onDataUpdated }) {
         </div>
       )}
 
+      {/* Registration Modal */}
+      {showRegisterModal && (
+        <FinderRegistrationModal
+          finderType={finderType}
+          onClose={() => setShowRegisterModal(false)}
+          onSuccess={handleRegisterSuccess}
+        />
+      )}
     </div>
   );
 }
